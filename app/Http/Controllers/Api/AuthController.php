@@ -28,6 +28,23 @@ class AuthController extends Controller
 
         $data = $request->all();
 
+        //image upload
+        $imagePath = null;
+
+        if($request->hasFile('profile_picture') && $request->file('profile_picture')->isValid()){
+            $file = $request->file('profile_picture');
+
+            //generate unique filename
+            $fileName = time().'-'.$file->getClientOriginalName();
+
+            //move file to the public directory
+            $file->move(public_path('storage/profile'),$fileName);
+
+            //save the related path to the database
+            $imagePath = "storage/profile/".$fileName;
+        }
+        $data['profile_picture'] = $imagePath;
+
         User::create($data); 
 
          return response()->json([
@@ -70,5 +87,27 @@ class AuthController extends Controller
                     'message'=>'invalid credential'
                 ],400); 
             }
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+
+         return response()->json([
+            'status'=>'success',
+            'data'=>$user
+        ]);
+    }
+
+    public function logout()
+    {
+          $user = Auth::user();
+          $user->tokens()->delete();
+
+           return response()->json([
+            'status'=>'success',
+            'message'=>'user logout'
+        ],200);
+
     }
 }
